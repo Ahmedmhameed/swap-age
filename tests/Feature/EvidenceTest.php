@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Evidence;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class EvidenceTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDatabase;
 
     public function test_deleting_evidence_removes_its_file_after_commit(): void
     {

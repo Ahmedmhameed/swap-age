@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 #[Fillable(['trade_id', 'reviewer_id', 'reviewed_id', 'rating', 'comment_text'])]
 class Review extends Model
@@ -35,7 +36,7 @@ class Review extends Model
     {
         static::saving(function (Review $review): void {
             if ($review->rating < 1 || $review->rating > 5) {
-                throw new \InvalidArgumentException('Review ratings must be between 1 and 5.');
+                throw new InvalidArgumentException('Review ratings must be between 1 and 5.');
             }
         });
     }

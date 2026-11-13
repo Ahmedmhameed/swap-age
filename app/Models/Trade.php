@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TradeStatus;
+use App\Models\Builders\TradeBuilder;
 use Database\Factories\TradeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use LogicException;
 
 #[Fillable([
@@ -32,6 +34,14 @@ class Trade extends Model
 {
     /** @use HasFactory<TradeFactory> */
     use HasFactory, SoftDeletes;
+
+    /**
+     * @param  QueryBuilder  $query
+     */
+    public function newEloquentBuilder($query): TradeBuilder
+    {
+        return new TradeBuilder($query);
+    }
 
     public function owner(): BelongsTo
     {

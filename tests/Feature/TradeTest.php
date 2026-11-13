@@ -27,6 +27,44 @@ class TradeTest extends TestCase
         $this->assertModelExists($trade);
     }
 
+    public function test_query_force_delete_throws_and_preserves_all_trades(): void
+    {
+        $trade = Trade::factory()->create();
+
+        try {
+            Trade::query()->forceDelete();
+            $this->fail('Query force deletion should throw an exception.');
+        } catch (LogicException $exception) {
+            $this->assertSame('Trades cannot be permanently deleted.', $exception->getMessage());
+        }
+
+        $this->assertModelExists($trade);
+    }
+
+    public function test_filtered_query_force_delete_throws_and_preserves_the_trade(): void
+    {
+        $trade = Trade::factory()->create();
+
+        try {
+            Trade::where('id', $trade->id)->forceDelete();
+            $this->fail('Filtered query force deletion should throw an exception.');
+        } catch (LogicException $exception) {
+            $this->assertSame('Trades cannot be permanently deleted.', $exception->getMessage());
+        }
+
+        $this->assertModelExists($trade);
+    }
+
+    public function test_query_delete_soft_deletes_trades_without_removing_rows(): void
+    {
+        $trade = Trade::factory()->create();
+
+        Trade::query()->delete();
+
+        $this->assertSoftDeleted($trade);
+        $this->assertSame(1, Trade::withTrashed()->count());
+    }
+
     public function test_delete_soft_deletes_the_trade_without_removing_it(): void
     {
         $trade = Trade::factory()->create();
