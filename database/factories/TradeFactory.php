@@ -21,7 +21,7 @@ class TradeFactory extends Factory
     {
         return [
             'owner_id' => User::factory(),
-            'counterparty_id' => User::factory(),
+            'counterparty_id' => null,
             'status' => fake()->randomElement(TradeStatus::cases()),
             'version' => 1,
             'cash_amount_owner' => fake()->randomFloat(2, 0, 5000),

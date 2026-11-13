@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['trade_id', 'product_id', 'direction', 'quantity', 'condition', 'description'])]
+#[Fillable(['trade_id', 'product_id', 'direction', 'quantity', 'condition', 'description', 'added_during_negotiation'])]
 class TradeItem extends Model
 {
     /** @use HasFactory<TradeItemFactory> */
@@ -45,6 +45,7 @@ class TradeItem extends Model
         return [
             'direction' => TradeDirection::class,
             'quantity' => 'integer',
+            'added_during_negotiation' => 'boolean',
         ];
     }
 }

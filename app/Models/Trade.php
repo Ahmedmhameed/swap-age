@@ -53,6 +53,11 @@ class Trade extends Model
         return $this->belongsTo(User::class, 'counterparty_id');
     }
 
+    public function lastChangedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_changed_by_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(TradeItem::class);

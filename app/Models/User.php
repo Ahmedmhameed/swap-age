@@ -65,6 +65,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'subscription_tier' => SubscriptionTier::class,
+            'is_admin' => 'boolean',
         ];
     }
 }
