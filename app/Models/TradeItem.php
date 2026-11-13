@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\TradeDirection;
+use Database\Factories\TradeItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['trade_id', 'product_id', 'direction', 'quantity', 'condition', 'description'])]
 class TradeItem extends Model
 {
+    /** @use HasFactory<TradeItemFactory> */
+    use HasFactory;
+
     public function trade(): BelongsTo
     {
         return $this->belongsTo(Trade::class);

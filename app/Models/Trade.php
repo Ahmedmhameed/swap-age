@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Enums\TradeStatus;
+use Database\Factories\TradeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 #[Fillable([
     'owner_id',
@@ -26,7 +30,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 ])]
 class Trade extends Model
 {
-    use SoftDeletes;
+    /** @use HasFactory<TradeFactory> */
+    use HasFactory, SoftDeletes;
 
     public function owner(): BelongsTo
     {
@@ -58,13 +63,34 @@ class Trade extends Model
         return $this->hasMany(Review::class);
     }
 
-    protected static function booted(): void
+    public function forceDelete(): ?bool
     {
-        static::forceDeleting(function (Trade $trade): void {
-            foreach (Evidence::where('trade_id', $trade->getKey())->get() as $evidence) {
-                $evidence->delete();
-            }
-        });
+        throw new LogicException('Trades cannot be permanently deleted.');
+    }
+
+    /**
+     * @param  Builder<Trade>  $query
+     * @return Builder<Trade>
+     */
+    public function scopePublishedBy(Builder $query, User $user): Builder
+    {
+        return $query
+            ->where('owner_id', $user->getKey())
+            ->where('status', TradeStatus::Created->value);
+    }
+
+    /**
+     * @param  Builder<Trade>  $query
+     * @return Builder<Trade>
+     */
+    public function scopeActiveAsCounterparty(Builder $query, User $user): Builder
+    {
+        return $query
+            ->where('counterparty_id', $user->getKey())
+            ->whereIn('status', [
+                TradeStatus::Negotiating->value,
+                TradeStatus::Accepted->value,
+            ]);
     }
 
     protected function casts(): array
