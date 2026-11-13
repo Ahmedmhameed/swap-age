@@ -24,7 +24,7 @@ class EvidenceFactory extends Factory
             'trade_id' => Trade::factory(),
             'trade_item_id' => null,
             'kind' => fake()->randomElement(EvidenceKind::cases()),
-            'file_path' => fake()->uuid().'.jpg',
+            'file_path' => fake()->uuid() . '.jpg',
             'mime_type' => 'image/jpeg',
             'size' => fake()->numberBetween(1, 5000000),
             'uploaded_by_id' => User::factory(),
