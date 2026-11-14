@@ -92,6 +92,76 @@ class EvidenceActionsTest extends TestCase
         $this->assertSame($oldVersion + 1, $trade->fresh()->version);
     }
 
+    public function test_trade_party_cannot_delete_evidence_uploaded_by_the_other_party(): void
+    {
+        $trade = Trade::factory()->create(['status' => TradeStatus::Created, 'counterparty_id' => User::factory()]);
+        $evidence = Evidence::factory()->create(['trade_id' => $trade->id, 'uploaded_by_id' => $trade->owner_id]);
+
+        try {
+            app(DeleteEvidence::class)->handle($evidence, $trade->counterparty);
+            $this->fail('A party must not delete evidence uploaded by the other party.');
+        } catch (DomainRuleViolation $exception) {
+            $this->assertSame('لا يمكن حذف دليل رفعه طرف آخر.', $exception->getMessage());
+        }
+
+        $this->assertModelExists($evidence->fresh());
+    }
+
+    public function test_evidence_image_over_pixel_limit_is_rejected(): void
+    {
+        Storage::fake('local');
+        $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
+        $largeImage = $this->createImageUpload('large.jpg', 5001, 5000, 'jpeg');
+
+        try {
+            app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, $largeImage, $trade->owner);
+            $this->fail('An image exceeding the pixel limit must be rejected.');
+        } catch (DomainRuleViolation $exception) {
+            $this->assertSame('أبعاد الصورة كبيرة جدًا.', $exception->getMessage());
+        }
+    }
+
+    public function test_jpeg_evidence_is_saved_without_exif(): void
+    {
+        Storage::fake('local');
+        $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
+        $plainJpeg = app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, $this->createImageUpload('plain.jpg', 2, 3, 'jpeg'), $trade->owner);
+        $plainJpegContents = Storage::disk('local')->get($plainJpeg->file_path);
+        $plainJpegExif = exif_read_data('data://application/octet-stream;base64,'.base64_encode($plainJpegContents), 'IFD0', true);
+
+        $this->assertArrayNotHasKey('Orientation', $plainJpegExif['IFD0'] ?? []);
+    }
+
+    public function test_jpeg_evidence_orientation_rotates_image_dimensions(): void
+    {
+        Storage::fake('local');
+        $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
+        $orientedJpeg = app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, $this->createImageUpload('oriented.jpg', 2, 3, 'jpeg', 6), $trade->owner);
+        $orientedDimensions = getimagesizefromstring(Storage::disk('local')->get($orientedJpeg->file_path));
+
+        $this->assertSame([3, 2], [$orientedDimensions[0], $orientedDimensions[1]]);
+    }
+
+    public function test_webp_upload_is_processed_or_rejected_when_gd_lacks_support(): void
+    {
+        Storage::fake('local');
+        $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
+        $gdInfo = function_exists('gd_info') ? gd_info() : [];
+
+        if (! function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
+            $this->expectException(DomainRuleViolation::class);
+            $this->expectExceptionMessage('معالجة صور WebP غير مدعومة في هذه البيئة.');
+
+            app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, UploadedFile::fake()->createWithContent('photo.webp', "RIFF\x00\x00\x00\x00WEBP"), $trade->owner);
+
+            return;
+        }
+
+        $webp = app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, $this->createImageUpload('photo.webp', 2, 3, 'webp'), $trade->owner);
+
+        $this->assertTrue(Storage::disk('local')->exists($webp->file_path));
+    }
+
     public function test_rolling_back_evidence_upload_leaves_no_database_record_or_file(): void
     {
         Storage::fake('local');
@@ -154,5 +224,31 @@ class EvidenceActionsTest extends TestCase
         $response = $this->actingAs(User::factory()->create())->get(route('evidence.download', $evidence));
 
         $response->assertForbidden();
+    }
+
+    private function createImageUpload(string $name, int $width, int $height, string $format, ?int $orientation = null): UploadedFile
+    {
+        $image = imagecreatetruecolor($width, $height);
+        ob_start();
+
+        match ($format) {
+            'jpeg' => imagejpeg($image),
+            'webp' => imagewebp($image),
+            default => throw new \InvalidArgumentException('Unsupported test image format.'),
+        };
+
+        $contents = ob_get_clean();
+        imagedestroy($image);
+
+        if ($orientation !== null) {
+            $tiff = 'II'.pack('v', 42).pack('V', 8).pack('v', 1)
+                .pack('v', 0x0112).pack('v', 3).pack('V', 1).pack('v', $orientation)
+                .pack('v', 0).pack('V', 0);
+            $exif = "Exif\0\0".$tiff;
+            $segment = "\xff\xe1".pack('n', strlen($exif) + 2).$exif;
+            $contents = substr($contents, 0, 2).$segment.substr($contents, 2);
+        }
+
+        return UploadedFile::fake()->createWithContent($name, $contents);
     }
 }

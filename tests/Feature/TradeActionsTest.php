@@ -285,18 +285,24 @@ class TradeActionsTest extends TestCase
         $this->assertSame('confirmed_by_both', $trade->fresh()->completed_type);
     }
 
-    public function test_complete_expired_trades_completes_only_accepted_trades_past_deadline(): void
+    public function test_complete_expired_trades_completes_only_expired_accepted_trades_even_with_a_deleted_owner(): void
     {
         $this->travelTo(now()->startOfDay());
-        $expiredTrade = Trade::factory()->create(['status' => TradeStatus::Accepted, 'counterparty_id' => User::factory(), 'deadline_at' => now()->subSecond()]);
+        $deletedOwner = User::factory()->create();
+        $expiredTrade = Trade::factory()->create(['owner_id' => $deletedOwner->id, 'status' => TradeStatus::Accepted, 'counterparty_id' => User::factory(), 'deadline_at' => now()->subSecond()]);
+        $deletedOwner->delete();
+        $healthyExpiredTrade = Trade::factory()->create(['status' => TradeStatus::Accepted, 'counterparty_id' => User::factory(), 'deadline_at' => now()->subSecond()]);
         $futureTrade = Trade::factory()->create(['status' => TradeStatus::Accepted, 'counterparty_id' => User::factory(), 'deadline_at' => now()->addDay()]);
+        $createdExpiredTrade = Trade::factory()->create(['status' => TradeStatus::Created, 'deadline_at' => now()->subSecond()]);
 
         $completedCount = app(CompleteExpiredTrades::class)->handle(app(TradeDeadlineService::class), app(TradeTransitionService::class));
 
-        $this->assertSame(1, $completedCount);
+        $this->assertSame(2, $completedCount);
         $this->assertSame(TradeStatus::Completed, $expiredTrade->fresh()->status);
         $this->assertSame('auto_after_timeout', $expiredTrade->fresh()->completed_type);
+        $this->assertSame(TradeStatus::Completed, $healthyExpiredTrade->fresh()->status);
         $this->assertSame(TradeStatus::Accepted, $futureTrade->fresh()->status);
+        $this->assertSame(TradeStatus::Created, $createdExpiredTrade->fresh()->status);
     }
 
     public function test_cancel_trade_records_reason_and_previous_status(): void

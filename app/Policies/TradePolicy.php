@@ -85,11 +85,6 @@ class TradePolicy
             && in_array($trade->status, [TradeStatus::Created, TradeStatus::Negotiating], true);
     }
 
-    public function cancelNegotiation(User $user, Trade $trade): bool
-    {
-        return $this->participate($user, $trade);
-    }
-
     public function negotiate(User $user, Trade $trade): bool
     {
         return $trade->owner_id !== $user->id;
@@ -200,14 +195,6 @@ class TradePolicy
     public function deleteEvidence(User $user, Trade $trade): bool
     {
         return $this->isParty($user, $trade);
-    }
-
-    public function completeExpired(User $user, Trade $trade): bool
-    {
-        return $trade->owner_id === $user->id
-            && $trade->status === TradeStatus::Accepted
-            && $trade->deadline_at !== null
-            && $trade->deadline_at->lessThanOrEqualTo(now());
     }
 
     private function isParty(User $user, Trade $trade): bool

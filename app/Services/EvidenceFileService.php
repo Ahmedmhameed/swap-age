@@ -32,12 +32,14 @@ class EvidenceFileService
             default => throw new DomainRuleViolation('نوع ملف الدليل غير مسموح.'),
         };
         $path = "evidence/{$trade->id}/".Str::uuid().'.'.$extension;
-        $contents = str_starts_with($mimeType, 'image/')
-            ? $this->withoutExif($file, $mimeType)
-            : file_get_contents($file->getRealPath());
+        $contents = file_get_contents($file->getRealPath());
 
         if ($contents === false) {
             throw new RuntimeException('تعذر قراءة ملف الدليل.');
+        }
+
+        if (str_starts_with($mimeType, 'image/')) {
+            $contents = $this->withoutExif($contents, $mimeType);
         }
 
         $evidence = Evidence::create([
@@ -77,12 +79,41 @@ class EvidenceFileService
         }
     }
 
-    private function withoutExif(UploadedFile $file, string $mimeType): string
+    private function withoutExif(string $contents, string $mimeType): string
     {
-        $image = imagecreatefromstring((string) file_get_contents($file->getRealPath()));
+        $dimensions = getimagesizefromstring($contents);
+
+        if ($dimensions === false) {
+            throw new DomainRuleViolation('تعذر قراءة الصورة المرفوعة.');
+        }
+
+        if ($dimensions[0] * $dimensions[1] > 25_000_000) {
+            throw new DomainRuleViolation('أبعاد الصورة كبيرة جدًا.');
+        }
+
+        if ($mimeType === 'image/webp') {
+            $gdInfo = function_exists('gd_info') ? gd_info() : [];
+
+            if (! function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
+                throw new DomainRuleViolation('معالجة صور WebP غير مدعومة في هذه البيئة.');
+            }
+        }
+
+        $image = imagecreatefromstring($contents);
 
         if ($image === false) {
             throw new DomainRuleViolation('تعذر قراءة الصورة المرفوعة.');
+        }
+
+        if ($mimeType === 'image/jpeg') {
+            if (! function_exists('exif_read_data')) {
+                imagedestroy($image);
+
+                throw new RuntimeException('دعم قراءة بيانات EXIF غير متاح لمعالجة صور JPEG.');
+            }
+
+            $exif = @exif_read_data('data://application/octet-stream;base64,'.base64_encode($contents), 'IFD0', true);
+            $image = $this->orientImage($image, (int) ($exif['IFD0']['Orientation'] ?? 1));
         }
 
         ob_start();
@@ -99,5 +130,42 @@ class EvidenceFileService
         }
 
         return $contents;
+    }
+
+    private function orientImage(\GdImage $image, int $orientation): \GdImage
+    {
+        $rotation = match ($orientation) {
+            3 => 180,
+            5, 6 => -90,
+            7, 8 => 90,
+            default => 0,
+        };
+
+        if ($rotation !== 0) {
+            $rotatedImage = imagerotate($image, $rotation, 0);
+
+            if ($rotatedImage === false) {
+                imagedestroy($image);
+
+                throw new RuntimeException('تعذر تدوير الصورة المرفوعة.');
+            }
+
+            imagedestroy($image);
+            $image = $rotatedImage;
+        }
+
+        $flip = match ($orientation) {
+            2, 5, 7 => IMG_FLIP_HORIZONTAL,
+            4 => IMG_FLIP_VERTICAL,
+            default => null,
+        };
+
+        if ($flip !== null && ! imageflip($image, $flip)) {
+            imagedestroy($image);
+
+            throw new RuntimeException('تعذر عكس الصورة المرفوعة.');
+        }
+
+        return $image;
     }
 }

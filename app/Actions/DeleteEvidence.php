@@ -23,6 +23,10 @@ class DeleteEvidence
                 throw new DomainRuleViolation('الدليل لا يتبع هذه الصفقة.');
             }
 
+            if ($lockedEvidence->uploaded_by_id !== $actor->id) {
+                throw new DomainRuleViolation('لا يمكن حذف دليل رفعه طرف آخر.');
+            }
+
             $lockedEvidence->delete();
 
             if (in_array($trade->status, [TradeStatus::Created, TradeStatus::Negotiating], true)) {
