@@ -48,8 +48,8 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category, UpdateCategory $action): RedirectResponse
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:categories,name,'.$category->id],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:categories,slug,'.$category->id],
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name,' . $category->id],
+            'slug' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:categories,slug,' . $category->id],
         ]);
         $action->handle($category, $request->user(), $data);
 

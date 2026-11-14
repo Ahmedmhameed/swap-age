@@ -22,8 +22,8 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('can:create,'.Category::class)->name('categories.create');
-    Route::post('/categories', [CategoryController::class, 'store'])->middleware('can:create,'.Category::class)->name('categories.store');
+    Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('can:create,' . Category::class)->name('categories.create');
+    Route::post('/categories', [CategoryController::class, 'store'])->middleware('can:create,' . Category::class)->name('categories.store');
     Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->middleware('can:update,category')->name('categories.edit');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('can:update,category')->name('categories.update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('can:delete,category')->name('categories.destroy');

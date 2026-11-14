@@ -36,7 +36,7 @@ class TradeController extends Controller
                 $query->orWhere('owner_id', $userId)->orWhere('counterparty_id', $userId);
             }
         })
-            ->when($status && TradeStatus::tryFrom($status), fn ($query) => $query->where('status', $status))
+            ->when($status && TradeStatus::tryFrom($status), fn($query) => $query->where('status', $status))
             ->with(['owner', 'counterparty'])
             ->withCount('items')
             ->latest('id')

@@ -17,7 +17,8 @@
                     <p class="text-sm text-stone-500">{{ $category->slug }}</p>
                 </div>
                 @can('update', $category)
-                    <a href="{{ route('categories.edit', $category) }}" class="border border-stone-300 px-3 py-1.5 text-sm">تعديل</a>
+                    <a href="{{ route('categories.edit', $category) }}"
+                        class="border border-stone-300 px-3 py-1.5 text-sm">تعديل</a>
                 @endcan
             </article>
         @empty
