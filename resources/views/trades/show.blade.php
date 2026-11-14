@@ -17,6 +17,10 @@
         </div>
         <div class="grid gap-8 lg:grid-cols-[1fr_19rem]">
             <section>
+                <section class="mb-6 border-y border-stone-200 py-4">
+                    <h2 class="font-semibold">التصنيفات</h2>
+                    <p class="mt-2 text-sm text-stone-600">{{ $trade->categories->pluck('name')->join('، ') ?: 'لا توجد تصنيفات.' }}</p>
+                </section>
                 <h2 class="mb-3 text-xl font-semibold">العناصر</h2>
                 <div class="divide-y divide-stone-200 border-y border-stone-200">
                     @forelse ($trade->items as $item)

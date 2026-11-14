@@ -51,6 +51,11 @@ class TradePolicy
         return $trade->owner_id === $user->id && $trade->status === TradeStatus::Draft;
     }
 
+    public function updateCategories(User $user, Trade $trade): bool
+    {
+        return $this->canUpdate($user, $trade);
+    }
+
     /**
      * Determine whether the user can delete the model.
      */
@@ -113,7 +118,7 @@ class TradePolicy
 
     public function canAccept(User $user, Trade $trade): bool
     {
-        if (!in_array($trade->status, [TradeStatus::Created, TradeStatus::Negotiating], true)) {
+        if (! in_array($trade->status, [TradeStatus::Created, TradeStatus::Negotiating], true)) {
             return false;
         }
 
@@ -132,7 +137,7 @@ class TradePolicy
 
     public function canConfirm(User $user, Trade $trade): bool
     {
-        if ($trade->status !== TradeStatus::Accepted || !$this->isParty($user, $trade)) {
+        if ($trade->status !== TradeStatus::Accepted || ! $this->isParty($user, $trade)) {
             return false;
         }
 
@@ -172,7 +177,7 @@ class TradePolicy
     {
         return $this->isParty($user, $trade)
             && in_array($trade->status, [TradeStatus::Completed, TradeStatus::Cancelled], true)
-            && !$trade->reviews()->where('reviewer_id', $user->id)->exists();
+            && ! $trade->reviews()->where('reviewer_id', $user->id)->exists();
     }
 
     public function uploadEvidence(User $user, Trade $trade): bool

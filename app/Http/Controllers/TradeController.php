@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Actions\CreateDraftTrade;
 use App\Actions\HideTrade;
 use App\Actions\PublishTrade;
+use App\Actions\SyncTradeCategories;
 use App\Actions\UpdateDraftTrade;
 use App\Actions\UpdateTradeCash;
 use App\Enums\TradeStatus;
 use App\Http\Requests\CreateDraftTradeRequest;
 use App\Http\Requests\UpdateDraftTradeRequest;
 use App\Http\Requests\UpdateTradeCashRequest;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Trade;
 use App\Services\TradeLimitService;
@@ -59,6 +61,7 @@ class TradeController extends Controller
     {
         Gate::authorize('view', $trade);
         $trade->load(['owner', 'counterparty', 'items.product', 'items.evidence', 'evidence', 'reviews.reviewer', 'reviews.reviewed', 'cancellation']);
+        $trade->load('categories');
         $products = Product::query()->where('is_approved', true)->orderBy('name')->get();
 
         return view('trades.show', compact('trade', 'products'));
@@ -72,7 +75,19 @@ class TradeController extends Controller
         return view('trades.edit', [
             'trade' => $trade,
             'products' => Product::query()->where('is_approved', true)->orderBy('name')->get(),
+            'categories' => Category::query()->orderBy('name')->get(),
         ]);
+    }
+
+    public function updateCategories(Request $request, Trade $trade, SyncTradeCategories $action): RedirectResponse
+    {
+        $data = $request->validate([
+            'category_ids' => ['sometimes', 'array'],
+            'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
+        ]);
+        $action->handle($trade, $request->user(), $data['category_ids'] ?? []);
+
+        return back()->with('status', 'تم تحديث تصنيفات الصفقة.');
     }
 
     public function update(UpdateDraftTradeRequest $request, Trade $trade, UpdateDraftTrade $action): RedirectResponse

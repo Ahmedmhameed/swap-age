@@ -15,7 +15,7 @@
                     <article class="flex items-center justify-between gap-4 px-4 py-4">
                         <div>
                             <h2 class="font-medium">{{ $product->brand }} {{ $product->name }}</h2>
-                            <p class="mt-1 text-sm text-stone-500">{{ $product->category }} @if ($product->model) ·
+                            <p class="mt-1 text-sm text-stone-500">@if ($product->model) ·
                             {{ $product->model }} @endif
                             </p>
                         </div>@if (!$product->is_approved)<span class="text-xs text-amber-800">قيد المراجعة</span>@endif
@@ -28,8 +28,7 @@
             </section>
             @auth<form method="POST" action="{{ route('products.store') }}"
                 class="h-fit space-y-3 border border-stone-200 bg-white p-5">@csrf<h2 class="text-lg font-semibold">طلب منتج
-                    جديد</h2><label class="block text-sm">الفئة<input name="category" required maxlength="100"
-                        class="mt-1 w-full border border-stone-300 px-3 py-2"></label><label class="block text-sm">العلامة
+                    جديد</h2><label class="block text-sm">العلامة
                     التجارية<input name="brand" required maxlength="100"
                         class="mt-1 w-full border border-stone-300 px-3 py-2"></label><label
                     class="block text-sm">الاسم<input name="name" required maxlength="150"

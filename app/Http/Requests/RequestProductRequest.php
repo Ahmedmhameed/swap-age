@@ -23,7 +23,6 @@ class RequestProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category' => ['required', 'string', 'max:100'],
             'brand' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:150'],
             'model' => ['nullable', 'string', 'max:150'],

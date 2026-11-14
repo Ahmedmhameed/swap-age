@@ -18,7 +18,6 @@ class ProductActionsTest extends TestCase
     {
         $requester = User::factory()->create();
         $product = app(RequestProduct::class)->handle($requester, [
-            'category' => 'phones',
             'brand' => 'Example',
             'name' => 'Model One',
         ]);

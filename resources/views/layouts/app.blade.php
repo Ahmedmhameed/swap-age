@@ -17,6 +17,7 @@
             <div class="flex items-center gap-5 text-sm">
                 <a href="{{ route('trades.index') }}" class="hover:text-emerald-700">الصفقات</a>
                 <a href="{{ route('products.index') }}" class="hover:text-emerald-700">المنتجات</a>
+                <a href="{{ route('categories.index') }}" class="hover:text-emerald-700">التصنيفات</a>
                 @auth<a href="{{ route('trades.create') }}"
                     class="rounded-sm bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">صفقة جديدة</a>
                 @endauth

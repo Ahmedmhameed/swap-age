@@ -21,6 +21,19 @@
                     class="mt-1 block w-full border border-stone-300 px-3 py-2"></label>
             <button class="bg-emerald-700 px-5 py-2.5 font-medium text-white hover:bg-emerald-800">حفظ التعديلات</button>
         </form>
+        @if ($trade->status === \App\Enums\TradeStatus::Draft)
+            <form method="POST" action="{{ route('trades.categories.update', $trade) }}" class="mt-5 max-w-2xl space-y-4 border border-stone-200 bg-white p-6">
+                @csrf @method('PUT')
+                <label class="block text-sm">تصنيفات الصفقة
+                    <select name="category_ids[]" multiple class="mt-1 block min-h-36 w-full border border-stone-300 px-3 py-2">
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected($trade->categories->contains($category->id))>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button class="bg-emerald-700 px-5 py-2.5 font-medium text-white">حفظ التصنيفات</button>
+            </form>
+        @endif
         <section class="mt-8 max-w-2xl">
             <h2 class="mb-4 text-xl font-semibold">عناصر الصفقة</h2>
             @forelse ($trade->items as $item)

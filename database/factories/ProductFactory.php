@@ -18,7 +18,6 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'category' => fake()->word(),
             'brand' => fake()->company(),
             'name' => fake()->words(2, true),
             'model' => fake()->optional()->bothify('??-###'),
