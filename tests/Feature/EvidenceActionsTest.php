@@ -127,7 +127,7 @@ class EvidenceActionsTest extends TestCase
         $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
         $plainJpeg = app(EvidenceFileService::class)->store($trade, null, EvidenceKind::ProductPhoto, $this->createImageUpload('plain.jpg', 2, 3, 'jpeg'), $trade->owner);
         $plainJpegContents = Storage::disk('local')->get($plainJpeg->file_path);
-        $plainJpegExif = exif_read_data('data://application/octet-stream;base64,'.base64_encode($plainJpegContents), 'IFD0', true);
+        $plainJpegExif = exif_read_data('data://application/octet-stream;base64,' . base64_encode($plainJpegContents), 'IFD0', true);
 
         $this->assertArrayNotHasKey('Orientation', $plainJpegExif['IFD0'] ?? []);
     }
@@ -148,7 +148,7 @@ class EvidenceActionsTest extends TestCase
         $trade = Trade::factory()->create(['status' => TradeStatus::Draft]);
         $gdInfo = function_exists('gd_info') ? gd_info() : [];
 
-        if (! function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
+        if (!function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
             $this->expectException(DomainRuleViolation::class);
             $this->expectExceptionMessage('معالجة صور WebP غير مدعومة في هذه البيئة.');
 
@@ -241,12 +241,12 @@ class EvidenceActionsTest extends TestCase
         imagedestroy($image);
 
         if ($orientation !== null) {
-            $tiff = 'II'.pack('v', 42).pack('V', 8).pack('v', 1)
-                .pack('v', 0x0112).pack('v', 3).pack('V', 1).pack('v', $orientation)
-                .pack('v', 0).pack('V', 0);
-            $exif = "Exif\0\0".$tiff;
-            $segment = "\xff\xe1".pack('n', strlen($exif) + 2).$exif;
-            $contents = substr($contents, 0, 2).$segment.substr($contents, 2);
+            $tiff = 'II' . pack('v', 42) . pack('V', 8) . pack('v', 1)
+                . pack('v', 0x0112) . pack('v', 3) . pack('V', 1) . pack('v', $orientation)
+                . pack('v', 0) . pack('V', 0);
+            $exif = "Exif\0\0" . $tiff;
+            $segment = "\xff\xe1" . pack('n', strlen($exif) + 2) . $exif;
+            $contents = substr($contents, 0, 2) . $segment . substr($contents, 2);
         }
 
         return UploadedFile::fake()->createWithContent($name, $contents);

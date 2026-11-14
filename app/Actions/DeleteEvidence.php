@@ -19,7 +19,7 @@ class DeleteEvidence
             $this->assertTradeStatus($trade, [TradeStatus::Draft, TradeStatus::Created, TradeStatus::Negotiating]);
             $lockedEvidence = Evidence::query()->whereKey($evidence->getKey())->lockForUpdate()->first();
 
-            if (! $lockedEvidence || $lockedEvidence->trade_id !== $trade->id) {
+            if (!$lockedEvidence || $lockedEvidence->trade_id !== $trade->id) {
                 throw new DomainRuleViolation('الدليل لا يتبع هذه الصفقة.');
             }
 

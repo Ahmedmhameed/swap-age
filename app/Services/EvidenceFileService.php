@@ -31,7 +31,7 @@ class EvidenceFileService
             'audio/ogg' => 'ogg',
             default => throw new DomainRuleViolation('نوع ملف الدليل غير مسموح.'),
         };
-        $path = "evidence/{$trade->id}/".Str::uuid().'.'.$extension;
+        $path = "evidence/{$trade->id}/" . Str::uuid() . '.' . $extension;
         $contents = file_get_contents($file->getRealPath());
 
         if ($contents === false) {
@@ -53,7 +53,7 @@ class EvidenceFileService
         ]);
 
         DB::afterCommit(function () use ($path, $contents): void {
-            if (! Storage::disk('local')->put($path, $contents)) {
+            if (!Storage::disk('local')->put($path, $contents)) {
                 throw new RuntimeException('تعذر حفظ ملف الدليل بعد اعتماد العملية.');
             }
         });
@@ -74,7 +74,7 @@ class EvidenceFileService
                 || (($isPdf || $isAudio) && $size <= 10 * 1024 * 1024),
         };
 
-        if (! $isValid) {
+        if (!$isValid) {
             throw new DomainRuleViolation('نوع الملف أو حجمه لا يطابق شروط الدليل.');
         }
     }
@@ -94,7 +94,7 @@ class EvidenceFileService
         if ($mimeType === 'image/webp') {
             $gdInfo = function_exists('gd_info') ? gd_info() : [];
 
-            if (! function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
+            if (!function_exists('imagewebp') || empty($gdInfo['WebP Support'])) {
                 throw new DomainRuleViolation('معالجة صور WebP غير مدعومة في هذه البيئة.');
             }
         }
@@ -106,13 +106,13 @@ class EvidenceFileService
         }
 
         if ($mimeType === 'image/jpeg') {
-            if (! function_exists('exif_read_data')) {
+            if (!function_exists('exif_read_data')) {
                 imagedestroy($image);
 
                 throw new RuntimeException('دعم قراءة بيانات EXIF غير متاح لمعالجة صور JPEG.');
             }
 
-            $exif = @exif_read_data('data://application/octet-stream;base64,'.base64_encode($contents), 'IFD0', true);
+            $exif = @exif_read_data('data://application/octet-stream;base64,' . base64_encode($contents), 'IFD0', true);
             $image = $this->orientImage($image, (int) ($exif['IFD0']['Orientation'] ?? 1));
         }
 
@@ -125,7 +125,7 @@ class EvidenceFileService
         $contents = ob_get_clean();
         imagedestroy($image);
 
-        if (! $saved || $contents === false) {
+        if (!$saved || $contents === false) {
             throw new RuntimeException('تعذر معالجة الصورة المرفوعة.');
         }
 
@@ -160,7 +160,7 @@ class EvidenceFileService
             default => null,
         };
 
-        if ($flip !== null && ! imageflip($image, $flip)) {
+        if ($flip !== null && !imageflip($image, $flip)) {
             imagedestroy($image);
 
             throw new RuntimeException('تعذر عكس الصورة المرفوعة.');

@@ -23,11 +23,11 @@ class CompleteExpiredTrades
                     DB::transaction(function () use ($trade, $deadlines, $transitions, &$completed): void {
                         $lockedTrade = Trade::query()->whereKey($trade->id)->lockForUpdate()->first();
 
-                        if (! $lockedTrade) {
+                        if (!$lockedTrade) {
                             return;
                         }
 
-                        if ($lockedTrade->status !== TradeStatus::Accepted || ! $deadlines->hasExpired($lockedTrade)) {
+                        if ($lockedTrade->status !== TradeStatus::Accepted || !$deadlines->hasExpired($lockedTrade)) {
                             return;
                         }
 
